@@ -170,8 +170,11 @@ If (!(Get-CimInstance -ClassName Win32_Product -Filter "Caption like 'Zabbix Age
 
     Write-VerboseLog -LogInfo 'Setting Servertype variable depending on which service or windows feature was found.' -LogPath $DeployLogPath
     ## Assigning server type-specific value to the ServerType variable.
-    If ($AD -eq 'Installed') {
-    $ServerType = 'Domain Controller'
+    If ($env:COMPUTERNAME -match '^TS-') {
+        $ServerType = 'Terminal Server'
+    }
+    ElseIf ($AD -eq 'Installed') {
+        $ServerType = 'Domain Controller'
     }
     ElseIf ($CS -eq 'Installed') {
         $ServerType = 'Certificate Authority'
