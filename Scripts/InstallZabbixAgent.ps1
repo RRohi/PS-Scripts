@@ -41,16 +41,12 @@ Param(
 )
 
 Begin {
-    # Get Current DateTime and store it in a variable.
     Get-Date -Format 'yyyyMMdd_HHmmss' -OutVariable DateStamp | Out-Null
 } # End of Begin block.
 Process {
-    # Output Verbose Log Text.
     Write-Verbose -Message "$DateStamp - $LogInfo"
 
-    # Check if LogPath parameter was used and Debugging is enabled.
     If ($LogPath) {
-        # Send verbose log to file.
         Add-Content -Path $LogPath -Value "$DateStamp - $LogInfo" -Encoding Unicode
     }
 } # End of Process block.
@@ -60,21 +56,25 @@ Process {
 #region Variables.
 ## Verbose log path.
 $DeployLogPath = 'C:\TEMP\ZabbixAgentDeploy.log'
+
 ## Deployment source.
 $DeploySource = 'C:\TEMP'
 Write-VerboseLog -LogInfo "DeploySource variable set to: '$DeploySource'." -LogPath $DeployLogPath
+
 ## Agent config file.
 $Config = 'C:\Program Files\Zabbix Agent 2\zabbix_agent2.conf'
 Write-VerboseLog -LogInfo "Config variable set to: '$Config'." -LogPath $DeployLogPath
+
 ## Agent script folder.
 $Scripts = 'C:\Program Files\Zabbix Agent 2\scripts'
 Write-VerboseLog -LogInfo "Scripts variable set to: '$Scripts'." -LogPath $DeployLogPath
+
 ## UserParameters folder.
 $UserParams = 'C:\Program Files\Zabbix Agent 2\userparams'
 Write-VerboseLog -LogInfo "UserParams variable set to: '$Scripts'." -LogPath $DeployLogPath
 
 Write-VerboseLog -LogInfo "Environment parameter value: '$Environment'." -LogPath $DeployLogPath
-## Set server variable based on the Environment parameter value.
+
 If ($Environment -eq 'Live') {
     $Server = 'live.zabbix.instance'
     Write-VerboseLog -LogInfo "Server variable set to: '$Server'." -LogPath $DeployLogPath
@@ -88,7 +88,6 @@ Else {
     Exit 1
 }
 
-# Construct a FQDN out of computer's hostname.
 $FQDN = [System.Net.Dns]::GetHostByName(($env:COMPUTERNAME)).Hostname.ToLower()
 Write-VerboseLog -LogInfo "FQDN variable set to: '$FQDN'." -LogPath $DeployLogPath
 
@@ -114,12 +113,10 @@ If ($MiddleVersionCount -ge 1) {
     Write-VerboseLog -LogInfo "Latest middle version: '$LatestMiddleVersion'. Versions found: $MiddleVersionCount." -LogPath $DeployLogPath
 }
 Else {
-    ### For some reason the query failed, exiting the script.
-    Write-VerboseLog -LogInfo 'Unable to retrieve data from website. Exiting.' -LogPath $DeployLogPath
+    Write-VerboseLog -LogInfo 'Unable to retrieve data from the website. Exiting.' -LogPath $DeployLogPath
     Exit 1
 }
 
-## Get minor versions.
 Write-VerboseLog -LogInfo "Getting the latest minor versions from: '$Stable$LatestMiddleVersion'." -LogPath $DeployLogPath
 $MinorVersions = Invoke-WebRequest -Method Get -UseBasicParsing -Uri "$Stable$LatestMiddleVersion"
 
@@ -130,16 +127,13 @@ Write-VerboseLog -LogInfo "Latest minor version: '$LatestMinorVerion'. Versions 
 
 # Check if middle version of Zabbix is already installed. Skip install, if yes.
 If (!(Get-CimInstance -ClassName Win32_Product -Filter "Caption like 'Zabbix Agent%' AND Version like '$($LatestMiddleVersion -replace '/', $null)%'")) {
-    ## Get all the Zabbix agent packages for the latest version.
     Write-VerboseLog -LogInfo "Getting all packages versions from: '$Stable$LatestMiddleVersion$LatestMinorVerion'." -LogPath $DeployLogPath
     $Packages = Invoke-WebRequest -Method Get -UseBasicParsing -Uri "$Stable$LatestMiddleVersion$LatestMinorVerion"
 
-    ## Filter out Zabbix agent 2 MSI package for 64-bit Windows with OpenSSL support.
     Write-VerboseLog -LogInfo "Getting the 64-bit Zabbix Agent 2 OpenSSL package versions from: '$Stable$LatestMiddleVersion$LatestMinorVerion'." -LogPath $DeployLogPath
     $WinPackage = $Packages.Links | Where-Object href -like 'zabbix_agent2-*-amd64-openssl.msi' | Select-Object -ExpandProperty href
     Write-VerboseLog -LogInfo "Latest package: '$WinPackage'." -LogPath $DeployLogPath
 
-    ## Download the latest agent.
     Write-VerboseLog -LogInfo "Downloading package '$WinPackage' to '$DeploySource'." -LogPath $DeployLogPath
     Start-BitsTransfer -Source "$Stable$LatestMiddleVersion$LatestMinorVerion$WinPackage" -Destination "$DeploySource\$WinPackage"
 
@@ -169,6 +163,7 @@ If (!(Get-CimInstance -ClassName Win32_Product -Filter "Caption like 'Zabbix Age
     Write-VerboseLog -LogInfo "MSSQLSERVER service status: '$SQL'. Not present if null." -LogPath $DeployLogPath
 
     Write-VerboseLog -LogInfo 'Setting Servertype variable depending on which service or windows feature was found.' -LogPath $DeployLogPath
+    
     ## Assigning server type-specific value to the ServerType variable.
     If ($env:COMPUTERNAME -match '^TS-') {
         $ServerType = 'Terminal Server'
@@ -198,12 +193,11 @@ If (!(Get-CimInstance -ClassName Win32_Product -Filter "Caption like 'Zabbix Age
 
     Write-VerboseLog -LogInfo "ServerType variable set to: '$ServerType'. (Basic if server has no specified role or service present.)" -LogPath $DeployLogPath
 
-    ## Install the client.
     Write-VerboseLog -LogInfo "Installing '$DeploySource\$WinPackage'." -LogPath $DeployLogPath
     Start-Process -FilePath 'C:\Windows\System32\msiexec.exe' -ArgumentList "/qn /l* $DeploySource\ZabbixAgentIntall.log /i $DeploySource\$WinPackage ADDLOCAL=ALL ENABLEPATH=1 LOGTYPE=file LOGFILE=""%INSTALLFOLDER%\logs\zabbix_agentd.log"" HOSTNAME=$FQDN HOSTMETADATA=""Windows - $ServerType"" SERVER=$Server SERVERACTIVE=$Server" -Wait
     Write-VerboseLog -LogInfo 'The package has been installed.' -LogPath $DeployLogPath
 
-    ## Deployment cleanup.
+    #region Deployment cleanup.
     ### Installation package.
     Write-VerboseLog -LogInfo "Deleting the '$DeploySource\$WinPackage' package." -LogPath $DeployLogPath
     Remove-Item -Path "$DeploySource\$WinPackage" -Force
@@ -215,22 +209,20 @@ If (!(Get-CimInstance -ClassName Win32_Product -Filter "Caption like 'Zabbix Age
     ### Installation script.
     Write-VerboseLog -LogInfo 'Removing install script.' -LogPath $DeployLogPath
     Remove-Item -Path $MyInvocation.MyCommand.Source
+    #endregion
 
-    ## Check if scripts directory exists.
     If (!(Test-Path -Path $Scripts)) {
-        ### Create it, if not.
         New-Item -Path $Scripts -ItemType Directory
     }
 
-    ## Check if userparams directory exists.
     If (!(Test-Path -Path $UserParams)) {
-        ### Create it, if not.
         New-Item -Path $UserParams -ItemType Directory
     }
     
     ## Download the following files from Bitbucket.
     ### Certificate retrieval script for Windows-based hosts.
     Start-BitsTransfer -Source 'https://git.corp.com/projects/repos/scripts/raw/Get-Certificate.ps1' -Destination $Scripts
+
     ### Zabbix user parameter configuration file.
     Start-BitsTransfer -Source 'https://git.corp.com/projects/repos/confs/raw/zabbix_userparams/zabbix_agent2.userparams.conf' -Destination $UserParams
 
@@ -280,11 +272,9 @@ If (!(Get-CimInstance -ClassName Win32_Product -Filter "Caption like 'Zabbix Age
     Set-Content -Path $Config -Value $ImportConfig -Force
     Write-VerboseLog -LogInfo 'Saved the modified configuration file.' -LogPath $DeployLogPath
 
-    ## Restart the agent.
     Restart-Service -Name 'Zabbix Agent 2'
     Write-VerboseLog -LogInfo 'Restarted ''Zabbix Agent 2'' service.' -LogPath $DeployLogPath
 }
 Else {
-    ## Agent within the current major version already exists.
     Write-VerboseLog -LogInfo 'Current Zabbix Agent already exists.' -LogPath $DeployLogPath
 }

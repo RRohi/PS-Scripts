@@ -15,16 +15,17 @@ Specify path for the folder.
 .PARAMETER FolderName
 Sepcify name for the folder.
 .NOTES
+Function is based on the article listed under links.
+.LINK
 https://devblogs.microsoft.com/scripting/use-powershell-to-create-scheduled-tasks-folders/
 .FUNCTIONALITY
 Task Scheduler support function.
 #>
 [CmdletBinding()]
 Param(
-    [Parameter( Position = 0, Mandatory = $False, HelpMessage = 'Provide path for the folder.' )]
-    [ValidatePattern('^\\.+(\\.+)?$')]
+    [ValidatePattern( '^\\.+(\\.+)?$' )]
     [String]$TaskPath,
-    [Parameter( Position = 1, Mandatory = $True, HelpMessage = 'Provide name for the folder.' )]
+    [Parameter( Mandatory = $True )]
     [String]$FolderName
 )
 
@@ -37,14 +38,14 @@ $TS.Connect()
 # Check if TaskPath was specified.
 If ($null -eq $TaskPath) {
     ## Create the new folder in the root folder.
-    $TSPath = $TS.GetFolder('\')
+    $TSPath = $TS.GetFolder( '\' )
 }
 Else {
     ## Create the new folder in the specified path.
-    $TSPath = $TS.GetFolder("$TaskPath")
+    $TSPath = $TS.GetFolder( "$TaskPath" )
 }
 
 # Create the new folder.
-$TSPath.CreateFolder("$FolderName")
+$TSPath.CreateFolder( "$FolderName" )
 
 } # End of New-ScheduledTaskFolder function.

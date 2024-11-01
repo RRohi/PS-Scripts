@@ -37,10 +37,10 @@ Get-VM | Where-Object { $PSItem.Guest -like "*Windows Server*" -and $PSItem.Exte
 
 ## Get VM with all its properties.
 ```powershell
-$vm = Get-VM -Name *vmname* | Select-Object *
+$VM = Get-VM -Name *vmname* | Select-Object *
 ```
 
 ## Get VM tags.
 ```powershell
-Get-TagAssignment -Entity $vm.Name
+Get-TagAssignment -Entity $VM.Name
 ```

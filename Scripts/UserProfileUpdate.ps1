@@ -1,5 +1,5 @@
 # Requires AD RSAT to be installed on local machine! Otherwise you need to get the SID from AD and do the remap manually.
-# Update user profile after a name change in AD.
+# Update the user profile after a name change in AD.
 
 ## Create a hashtable with the old and new name.
 $NameChange = @{ Old = 'old.account'; New = 'new.account' }

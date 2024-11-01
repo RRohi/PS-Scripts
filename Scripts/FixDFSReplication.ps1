@@ -37,4 +37,4 @@ Get-ADObject -Identity "CN=SYSVOL Subscription,CN=Domain System Volume,CN=DFSR-L
 ## Trigger sync with DFS Replication Diagnostics Utility on DC02.
 Invoke-Command -ComputerName DC02 -ScriptBlock { & dfsrdiag.exe PollAD }
 
-## Wait couple of minutes, or more, depending on the amount to replicate. It will not be instant.
+## Wait a couple of minutes, or more, depending on the amount to replicate. It will not be instant.
