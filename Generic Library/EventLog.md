@@ -19,3 +19,8 @@ Get-WinEvent -FilterHashtable @{ LogName = 'Application'; ID = 11707 } -MaxEvent
 # Application uninstalled events.
 Get-WinEvent -FilterHashtable @{ LogName = 'Application'; ID = 11724 } -MaxEvents 5 | Select-Object TimeCreated, Id, @{ Name = 'Owner'; Expression = { ConvertFrom-SIDToNT -SID $PSItem.UserId } }, Message
 ```
+
+## Export an event log.
+```powershell
+Invoke-CimMethod -Query 'SELECT * FROM Win32_NTEventlogFile WHERE LogfileName = "Security"' -MethodName BackupEventlog -Arguments @{ ArchiveFileName = 'C:\TEMP\security.evtx' }
+```

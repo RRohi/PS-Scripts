@@ -73,7 +73,15 @@ Begin {
 Process {
     Write-VerboseLog -LogInfo 'Check if network category is DomainAuthenticated.' -LogPath $LogPath
     If ((Get-NetConnectionProfile).NetworkCategory -ne 'DomainAuthenticated') {
-        Write-VerboseLog -LogInfo 'Network adapter profile is not domain authenticated. Trying to connect the other DC.' -LogPath $LogPath
+        Write-VerboseLog -LogInfo 'Network adapter profile is not domain authenticated.' -LogPath $LogPath
+        
+        Write-VerboseLog -LogInfo 'Wait for two minutes for the DC to settle down.' -LogPath $LogPath
+        Start-Sleep -Seconds 120
+
+        Write-VerboseLog -LogInfo "Do a preemptive network adapter restart." -LogPath $LogPath
+        Get-NetAdapter -Physical | Restart-NetAdapter -Confirm:$False
+
+        Write-VerboseLog -LogInfo 'Trying to connect to another DC.' -LogPath $LogPath
         While ((Test-NetConnection -ComputerName $DC -CommonTCPPort SMB).TcpTestSucceeded -ne $True) {
             Write-VerboseLog -LogInfo "SMB on $DC is unreachable, waiting for 10 seconds and trying again..." -LogPath $LogPath
             Start-Sleep -Seconds 10
@@ -83,6 +91,9 @@ Process {
         Get-NetAdapter -Physical | Restart-NetAdapter -Confirm:$False
 
         Write-VerboseLog -LogInfo "Network adapter was restarted. Current network profile: $((Get-NetConnectionProfile).NetworkCategory)" -LogPath $LogPath
+    }
+    Else {
+        Write-VerboseLog -LogInfo 'Network adapter profile is domain authenticated.' -LogPath $LogPath
     } # End of network category check.
 } # End of Process block.
 

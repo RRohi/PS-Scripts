@@ -53,7 +53,7 @@ $Output = ForEach ($Disk in $Disks) {
 $Output | Format-Table -Property *
 ```
 
-## Display total memory.
+## Display total memory in human-readable format.
 
 ```powershell
 ((Get-CimInstance Win32_PhysicalMemory | Measure-Object -Property capacity -Sum).Sum / 1GB).ToString('# GB')
@@ -65,7 +65,7 @@ $Output | Format-Table -Property *
 # Create an empty array.
 $Table = @()
 # Add a custom PS Object into the array.
-$Table += [PSCustomObject]@{ column1 = 'data'; column2 = 'data2'; column3 = 'data3' }
+$Table += [PSCustomObject] @{ column1 = 'data'; column2 = 'data2'; column3 = 'data3' }
 ```
 
 ## Create a new WinRM HTTPS listener.
@@ -105,22 +105,4 @@ $Apps = Get-CimInstance -Query 'SELECT * FROM Win32_Product WHERE Name = "Partia
 ForEach ($Instance in $Apps) {
     Invoke-CimMethod -InputObject $Instance -MethodName Uninstall
 }
-```
-
-## AD group-managed service account (gMSA).
-
-### Create the gMSA on a DC.
-
-```powershell
-New-ADServiceAccount -Name 'serviceaccountname' -Description 'Descriptive text.' -DisplayName 'Display name' -DNSHostName 'server01.domain.tld' -Enabled $True -Path 'OU=Service Accounts,OU=Accounts,DC=domain,DC=tld' -PrincipalsAllowedToRetrieveManagedPassword SERVER01$ -SamAccountName 'serviceaccountname'
-```
-
-### Test the service account on the SERVER01.
-```powershell
-Test-ADServiceAccount -Identity serviceaccountname$
-```
-
-### If the test was successful, install it on the SERVER01.
-```
-Install-ADServiceAccount -Identity serviceaccountname$
 ```
